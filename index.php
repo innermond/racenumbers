@@ -22,7 +22,7 @@
   </div>
   </div>
 
-    <form id="race-number-form" role="form">
+    <form id="race-number-form" role="form" method="POST">
       <legend>Sheet</legend>
       <div class="row">
         <div class="form-group col-md-3 col-xs-12">
@@ -48,13 +48,13 @@
       <legend>Bleed & Crop Marks</legend>      
       <div class="btn-group" data-toggle="buttons">                            
         <label class="btn btn-default btn-sm">
-          <input id="bleed-no" name="options" type="radio">No Bleed
+          <input id="bleed-no" name="options" type="radio" value="0">No Bleed
         </label>
         <label class="btn btn-default btn-sm">
-          <input id="bleed-yes" name="options" type="radio">10mm Bleed
+          <input id="bleed-yes" name="options" type="radio" value="1">10mm Bleed
         </label>
         <label class="btn btn-default btn-sm">
-          <input id="bleed-yes-crop-marks" name="options" type="radio">10mm Bleed and Crop Marks
+          <input id="bleed-yes-crop-marks" name="options" type="radio" value="2">10mm Bleed and Crop Marks
         </label>
       </div>
       </div>
@@ -78,7 +78,7 @@
           <div class="form-group">
             <label for="number-single">Enter Number</label>
             <div class="input-group">
-              <input type="number" value="1" class="form-control" id="number-single" placeholder="Number">
+              <input type="number" min="1" value="1" class="form-control" id="number-single" placeholder="Number">
             </div>
           </div>
         </div>
@@ -86,13 +86,13 @@
           <div class="form-group col-md-3 col-sm-12">
             <label for="number-from">From</label>
             <div class="input-group">
-              <input type="number" value="1" class="form-control" id="number-from" placeholder="From">
+              <input type="number" min="1" value="1" class="form-control" id="number-from" placeholder="From">
             </div>
           </div>
           <div class="form-group col-md-3 col-sm-12">
             <label for="number-to">To</label>
             <div class="input-group">
-              <input type="number" value="1" class="form-control" id="number-to" placeholder="To">
+              <input type="number" min="2" value="2" class="form-control" id="number-to" placeholder="To">
             </div>
           </div>
           <div class="col-md-12 clear">
@@ -118,9 +118,9 @@
         <label for="position">Position</label>
         <div class="input-group">
           <select class="form-control" id="position">
-            <option value="top">Top</option>
-            <option value="center">Center</option>
-            <option value="bottom">Bottom</option>
+            <option value="T">Top</option>
+            <option value="C">Center</option>
+            <option value="B">Bottom</option>
           </select>
         </div>
       </div>
@@ -162,24 +162,53 @@
       // $('.btn-group').button()
 
 
-      var
-      bleed = 10, 
-      help_block = $('#background-image-help-block'),
-      help_block_template = 'Background image must be <span class="badge">:W mm x :H mm</span> at <span class="badge">150 dpi</span>.',
-      update_help_block = function(bleed) {
-        if (typeof bleed == 'undefined') bleed = 0;
-        help_block.html(help_block_template.replace(':W', 2*bleed + 1*$('#sheet-width').val()).replace(':H', 2*bleed + 1*$('#sheet-height').val()));
-      }
-      $('#sheet-height').on('click', function(){update_help_block();})
-      $('#bleed-yes, #bleed-yes-crop-marks').on('change', function(event){
-        if($(event.target).prop('checked')) update_help_block(bleed);
-      ;
-      })
-      $('#bleed-no').on('change', function(event){ 
-        if($(event.target).prop('checked')) update_help_block(0);
-      })
-       $('#sheet-height').click();
+    var
+    bleed = 10, 
+    help_block = $('#background-image-help-block'),
+    help_block_template = 'Background image must be <span class="badge">:W mm x :H mm</span> at <span class="badge">150 dpi</span>.',
+    update_help_block = function(bleed) {
+      if (typeof bleed == 'undefined') bleed = 0;
+      help_block.html(help_block_template.replace(':W', 2*bleed + 1*$('#sheet-width').val()).replace(':H', 2*bleed + 1*$('#sheet-height').val()));
+    }
+    $('#sheet-height').on('click', function(){update_help_block();})
+    $('#bleed-yes, #bleed-yes-crop-marks').on('change', function(event){
+      if($(event.target).prop('checked')) update_help_block(bleed);
+    ;
     })
+    $('#bleed-no').on('change', function(event){ 
+      if($(event.target).prop('checked')) update_help_block(0);
+    }).click();
+    // $('#sheet-height').click();
+
+    $('#generate-pdf').on('click', function(){
+      // $('#race-number-form').serialize();
+      var 
+      range = $('#number-tab li.active a').attr('href').substr(1) == 'single' ? [$('#number-single').val()] : [$('#number-from').val(), $('#number-to').val()], 
+      data = {
+        'height':  $('#sheet-height').val(),
+        'width':  $('#sheet-width').val(),
+        'bleed':  $('input[name=options]:checked').val(),
+        'range': range,
+        'font': $('#font option:selected').val(),
+        'position': $('#position option:selected').val()
+      }
+      
+      $.ajax( {
+        type: "POST",
+        url: "pdf.php",
+        data: data
+      } )
+      .done(function(data) {
+        console.log(data);
+      })
+      .fail(function() {
+        console.log(data);
+      })
+      .always(function() {
+        console.log('last');
+      });
+        });
+      })
   </script>
 
 </body>
